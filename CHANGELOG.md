@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.1.2](https://github.com/jgrigorian/go-gitter/compare/v1.1.1...v1.1.2) (2026-03-05)
+
+
+### Bug Fixes
+
+* update sync logic ([d086d98](https://github.com/jgrigorian/go-gitter/commit/d086d98b0343d7a979dc5d003fcceba8e43da981))
+* update sync logic ([44b10c8](https://github.com/jgrigorian/go-gitter/commit/44b10c86958aeffd7d59a841f0ce3243feb3f684))
+
 ## [1.1.1](https://github.com/jgrigorian/go-gitter/compare/v1.1.0...v1.1.1) (2026-03-05)
 
 
