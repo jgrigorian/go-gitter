@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.1.0](https://github.com/jgrigorian/go-gitter/compare/v1.0.0...v1.1.0) (2026-03-05)
+
+
+### Features
+
+* add cross platform builds to Justfile ([33f7e40](https://github.com/jgrigorian/go-gitter/commit/33f7e409c00209d31ae4d278490dd8de4254ccce))
+* add cross platform builds to Justfile ([b990dc2](https://github.com/jgrigorian/go-gitter/commit/b990dc2f6ab6175dd5dede9f7e53f94bdd305769))
+
 ## 1.0.0 (2026-03-05)
 
 
