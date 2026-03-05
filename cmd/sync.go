@@ -24,11 +24,11 @@ var (
 
 // SyncResult holds the result of syncing a single repository
 type SyncResult struct {
-	Name      string
-	Success   bool
-	Warning   bool
-	Message   string
-	RepoIndex int // Index in original repos slice
+	Name          string
+	Success       bool
+	Warning       bool
+	Message       string
+	OriginalIndex int // Index in original config.Repositories slice
 }
 
 var syncCmd = &cobra.Command{
@@ -45,32 +45,34 @@ var syncCmd = &cobra.Command{
 			return nil
 		}
 
-		// Filter by group if specified
+		// Get flags
 		group, _ := cmd.Flags().GetString("group")
 		pull, _ := cmd.Flags().GetBool("pull")
 
-		repos := cfg.Repositories
-		if group != "" {
-			var filtered []config.Repository
-			for _, r := range repos {
-				if r.Group == group {
-					filtered = append(filtered, r)
-				}
+		// Build a slice of repos to sync with their original indices
+		type repoWithIndex struct {
+			repo    config.Repository
+			origIdx int
+		}
+		reposToSync := make([]repoWithIndex, 0, len(cfg.Repositories))
+
+		for i, r := range cfg.Repositories {
+			if group == "" || r.Group == group {
+				reposToSync = append(reposToSync, repoWithIndex{repo: r, origIdx: i})
 			}
-			repos = filtered
 		}
 
 		now := time.Now()
 
 		// Channels and waitgroup for parallel execution
-		resultChan := make(chan SyncResult, len(repos))
+		resultChan := make(chan SyncResult, len(reposToSync))
 		var wg sync.WaitGroup
 
 		// Mutex for protecting config updates
 		var mu sync.Mutex
 
 		// Print header
-		fmt.Println(infoStyle.Render(fmt.Sprintf("Syncing %d repository(s) in parallel...\n", len(repos))))
+		fmt.Println(infoStyle.Render(fmt.Sprintf("Syncing %d repository(s) in parallel...\n", len(reposToSync))))
 
 		// Start spinner animation in background
 		done := make(chan bool)
@@ -89,14 +91,15 @@ var syncCmd = &cobra.Command{
 		}()
 
 		// Launch goroutines for each repo
-		for i := range repos {
+		for _, ri := range reposToSync {
 			wg.Add(1)
-			go func(i int, repo config.Repository) {
+			go func(ri repoWithIndex) {
 				defer wg.Done()
+				repo := ri.repo
 
 				result := SyncResult{
-					Name:      repo.Name,
-					RepoIndex: i,
+					Name:          repo.Name,
+					OriginalIndex: ri.origIdx,
 				}
 
 				// Check if directory exists
@@ -133,20 +136,20 @@ var syncCmd = &cobra.Command{
 					result.Message = "fetched updates"
 				}
 
-				// Update last sync time (thread-safe)
+				// Update last sync time (thread-safe) using original index
 				if result.Success || result.Warning {
 					mu.Lock()
-					cfg.Repositories[i].LastSync = &now
+					cfg.Repositories[ri.origIdx].LastSync = &now
 					mu.Unlock()
 				}
 
 				resultChan <- result
-			}(i, repos[i])
+			}(ri)
 		}
 
 		// Wait for all goroutines and collect results
-		results := make([]SyncResult, 0, len(repos))
-		for range repos {
+		results := make([]SyncResult, 0, len(reposToSync))
+		for range reposToSync {
 			result := <-resultChan
 			results = append(results, result)
 		}

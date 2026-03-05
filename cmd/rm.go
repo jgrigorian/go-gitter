@@ -14,29 +14,25 @@ var rmCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		identifier := args[0]
 
-		cfg, err := config.Load()
+		cfg, err := config.GetConfig()
 		if err != nil {
 			return fmt.Errorf("failed to load config: %w", err)
 		}
 
-		// Check if repo exists
-		found := false
-		for _, repo := range cfg.Repositories {
-			if repo.Path == identifier || repo.Name == identifier {
-				found = true
-				break
-			}
+		repo := config.GetRepoByName(cfg, identifier)
+		if repo == nil {
+			repo = config.GetRepoByPath(cfg, identifier)
 		}
 
-		if !found {
-			return fmt.Errorf("repository not found: %s", identifier)
+		if repo == nil {
+			return fmt.Errorf("%w: %s", config.ErrRepoNotFound, identifier)
 		}
 
 		if err := config.RemoveRepo(cfg, identifier); err != nil {
 			return fmt.Errorf("failed to save config: %w", err)
 		}
 
-		fmt.Printf("Removed repository: %s\n", identifier)
+		fmt.Printf("Removed repository: %s\n", repo.Name)
 		return nil
 	},
 }
