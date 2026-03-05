@@ -8,12 +8,14 @@ A CLI tool to manage and sync multiple local git repositories.
 go install github.com/jgrigorian/go-gitter@latest
 ```
 
-Or build from source:
+Or build from source using [just](https://github.com/casey/just):
 
 ```bash
-git clone https://github.com/jgrigorian/go-gitter
-cd go-gitter
-go build -o go-gitter .
+just build        # Build the binary
+just install      # Install to ~/.local/bin
+just run ARGS=""  # Run the CLI
+just test         # Run tests
+just clean        # Clean build artifacts
 ```
 
 ## Usage
