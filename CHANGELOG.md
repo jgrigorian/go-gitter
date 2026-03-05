@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.1.1](https://github.com/jgrigorian/go-gitter/compare/v1.1.0...v1.1.1) (2026-03-05)
+
+
+### Bug Fixes
+
+* include go.sum and update .gitignore ([baa9fbc](https://github.com/jgrigorian/go-gitter/commit/baa9fbc9236428c731161c410aa9b1f7391043d8))
+* include go.sum and update .gitignore ([35080d0](https://github.com/jgrigorian/go-gitter/commit/35080d039506bab78448b43f12d9fec8e2d8dde2))
+
 ## [1.1.0](https://github.com/jgrigorian/go-gitter/compare/v1.0.0...v1.1.0) (2026-03-05)
 
 
