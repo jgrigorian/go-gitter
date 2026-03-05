@@ -58,11 +58,21 @@ go-gitter rm my-repo
 go-gitter rm /path/to/repo
 ```
 
+### Configuration management
+
+View and manage your configuration:
+
+```bash
+go-gitter config path        # Show config file location
+go-gitter config edit        # Open config in your editor ($EDITOR)
+go-gitter config validate    # Validate config and check repositories
+```
+
 ## Configuration
 
 Configuration is stored in `~/.config/go-gitter/config.yaml` (or `$XDG_CONFIG_HOME/go-gitter/config.yaml` if set).
 
-Example config:
+Both YAML and JSON formats are supported:
 
 ```yaml
 repositories:
@@ -78,6 +88,28 @@ settings:
   sync_timeout: 300
 ```
 
+```json
+{
+  "repositories": [
+    {
+      "path": "/home/user/projects/foo",
+      "name": "foo",
+      "group": "personal",
+      "last_sync": "2024-01-15T10:30:00Z"
+    },
+    {
+      "path": "/home/user/projects/bar",
+      "name": "bar",
+      "group": "work"
+    }
+  ],
+  "settings": {
+    "auto_fetch": false,
+    "sync_timeout": 300
+  }
+}
+```
+
 ## Features
 
 - Track multiple git repositories
@@ -85,3 +117,7 @@ settings:
 - Parallel syncing with progress indicator
 - Colorized output
 - Persistent configuration
+- Input validation (validates git repos before adding)
+- Config validation and diagnostics
+- JSON and YAML config support
+- Thread-safe config updates during sync
