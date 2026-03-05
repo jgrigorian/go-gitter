@@ -1,12 +1,19 @@
 # Justfile for go-gitter
 
+set dotenv-load := true
+
+name := "go-gitter"
+
+# Default target
+default: build
+
 # Build the binary
 build:
-    go build -o go-gitter .
+    go build -o {{name}} .
 
 # Build with debug info
 build-debug:
-    go build -o go-gitter -gcflags=all=-d=symoff=true .
+    go build -o {{name}} -gcflags=all=-d=symoff=true .
 
 # Run tests
 test:
@@ -14,11 +21,12 @@ test:
 
 # Install binary to ~/.local/bin
 install:
-    go build -o ~/.local/bin/go-gitter .
+    go build -o ~/.local/bin/{{name}} .
 
 # Clean build artifacts
 clean:
-    rm -f go-gitter
+    rm -f {{name}}*
+    rm -rf ./release
 
 # Run the CLI
 run ARGS='':
@@ -26,15 +34,56 @@ run ARGS='':
 
 # Add a test repository
 add-test:
-    ./go-gitter add ~/.dotfiles test
+    ./{{name}} add ~/.dotfiles test
 
 # List repositories
 list:
-    ./go-gitter list
+    ./{{name}} list
 
 # Sync all repositories
 sync:
-    ./go-gitter sync
+    ./{{name}} sync
 
-# Default target
-default: build
+# Cross-platform builds
+darwin:
+    @echo "Building {{name}}-darwin_x86_64 binary"
+    GOOS=darwin GOARCH=amd64 go build -o {{name}}-darwin_x86_64 .
+    @mkdir -p release
+    @echo "Compressing {{name}}-darwin_x86_64 binary..."
+    tar -czvf ./release/{{name}}-darwin_x86_64.tar.gz ./{{name}}-darwin_x86_64
+    rm ./{{name}}-darwin_x86_64
+    @echo " "
+
+darwin_arm:
+    @echo "Building {{name}}-darwin_arm64 binary..."
+    GOOS=darwin GOARCH=arm64 go build -o {{name}}-darwin_arm64 .
+    @mkdir -p release
+    @echo "Compressing {{name}}-darwin_arm64 binary..."
+    tar -czvf ./release/{{name}}-darwin_arm64.tar.gz ./{{name}}-darwin_arm64
+    rm ./{{name}}-darwin_arm64
+    @echo " "
+
+linux:
+    @echo "Building {{name}}-linux_x86_64 binary..."
+    GOOS=linux GOARCH=amd64 go build -o {{name}}-linux_x86_64 .
+    @mkdir -p release
+    @echo "Compressing {{name}}-linux_x86_64 binary..."
+    tar -czvf ./release/{{name}}-linux_x86_64.tar.gz ./{{name}}-linux_x86_64
+    rm ./{{name}}-linux_x86_64
+    @echo " "
+
+linux_arm:
+    @echo "Building {{name}}-linux_arm64 binary..."
+    GOOS=linux GOARCH=arm64 go build -o {{name}}-linux_arm64 .
+    @mkdir -p release
+    @echo "Compressing {{name}}-linux_arm64 binary..."
+    tar -czvf ./release/{{name}}-linux_arm64.tar.gz ./{{name}}-linux_arm64
+    rm ./{{name}}-linux_arm64
+    @echo " "
+
+# Build all platforms
+all: clean
+    just darwin
+    just darwin_arm
+    just linux
+    just linux_arm
