@@ -2,8 +2,10 @@ package cmd
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
+	"strings"
 	"sync"
 	"time"
 
@@ -110,15 +112,42 @@ var syncCmd = &cobra.Command{
 					return
 				}
 
-				// Run git fetch
-				gitCmd := exec.Command("git", "fetch", "--all")
+				// Run git fetch with verbose output to detect if there were updates
+				gitCmd := exec.Command("git", "fetch", "--all", "--prune")
 				gitCmd.Dir = repo.Path
-				if output, err := gitCmd.CombinedOutput(); err != nil {
+				stderr, err := gitCmd.StderrPipe()
+				if err != nil {
 					result.Success = false
-					result.Message = string(output)
+					result.Message = fmt.Sprintf("failed to run git: %v", err)
 					resultChan <- result
 					return
 				}
+
+				if err := gitCmd.Start(); err != nil {
+					result.Success = false
+					result.Message = fmt.Sprintf("failed to start git: %v", err)
+					resultChan <- result
+					return
+				}
+
+				stderrOutput, _ := io.ReadAll(stderr)
+				if err := gitCmd.Wait(); err != nil {
+					result.Success = false
+					result.Message = string(stderrOutput)
+					if result.Message == "" {
+						result.Message = err.Error()
+					}
+					resultChan <- result
+					return
+				}
+
+				// Check if there were any updates by comparing refs
+				gitRevCmd := exec.Command("git", "rev-list", "--count", "--max-count=1", "HEAD..origin/HEAD")
+				gitRevCmd.Dir = repo.Path
+				revOutput, _ := gitRevCmd.Output()
+				updatesCount := strings.TrimSpace(string(revOutput))
+
+				hasUpdates := updatesCount != "0" && updatesCount != ""
 
 				// If pull flag is set, also do git pull
 				if pull {
@@ -133,7 +162,11 @@ var syncCmd = &cobra.Command{
 					}
 				} else {
 					result.Success = true
-					result.Message = "fetched updates"
+					if hasUpdates {
+						result.Message = fmt.Sprintf("fetched %s update(s)", updatesCount)
+					} else {
+						result.Message = "already up to date"
+					}
 				}
 
 				// Update last sync time (thread-safe) using original index
