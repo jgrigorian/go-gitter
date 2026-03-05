@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.2.0](https://github.com/jgrigorian/go-gitter/compare/v1.1.2...v1.2.0) (2026-03-05)
+
+
+### Features
+
+* add `branch` subcommand for sync ([375f489](https://github.com/jgrigorian/go-gitter/commit/375f4895b88103d1d9e8283e26f9e66ba10648e8))
+* add `branch` subcommand for sync ([e0725d7](https://github.com/jgrigorian/go-gitter/commit/e0725d78bbbef2c4a00d0ac23e3397201554ad75))
+
 ## [1.1.2](https://github.com/jgrigorian/go-gitter/compare/v1.1.1...v1.1.2) (2026-03-05)
 
 
