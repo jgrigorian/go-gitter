@@ -1,0 +1,45 @@
+name: Build Release Binaries
+
+on:
+  release:
+    types:
+      - created
+
+jobs:
+  build:
+    name: Build Release Assets
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Display the release tag
+        run: echo ${{ github.event.release.tag_name }}
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: "1.25.0"
+
+      - name: Display the version of go that we have installed
+        run: go version
+
+      - uses: extractions/setup-just@v1
+        with:
+          just-version: 1.46.0
+
+      - name: Build binaries
+        run: |
+          mkdir ./release
+          just all
+
+      - name: List the go-gitter executables
+        run: ls -lh ./release/
+
+      - name: Upload the binaries
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GH_TOKEN }}
+          tag: ${{ github.ref }}
+          file: ./release/go-gitter-*
+          file_glob: true
