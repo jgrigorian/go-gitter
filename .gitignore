@@ -1,9 +1,6 @@
 # Compiled binary
 go-gitter
 
-# Go workspace
-*.sum
-
 # IDE
 .vscode/
 .idea/
