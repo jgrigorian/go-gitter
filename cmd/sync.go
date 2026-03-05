@@ -26,11 +26,13 @@ var (
 
 // SyncResult holds the result of syncing a single repository
 type SyncResult struct {
-	Name          string
-	Success       bool
-	Warning       bool
-	Message       string
-	OriginalIndex int // Index in original config.Repositories slice
+	Name              string
+	Success           bool
+	Warning           bool
+	Message           string
+	Branch            string
+	NonStandardBranch bool
+	OriginalIndex     int // Index in original config.Repositories slice
 }
 
 var syncCmd = &cobra.Command{
@@ -112,6 +114,17 @@ var syncCmd = &cobra.Command{
 					return
 				}
 
+				// Get current branch
+				branchCmd := exec.Command("git", "branch", "--show-current")
+				branchCmd.Dir = repo.Path
+				branchOutput, err := branchCmd.Output()
+				result.Branch = strings.TrimSpace(string(branchOutput))
+
+				// Check if branch is non-standard (not main, master, or empty for detached HEAD)
+				if err == nil && result.Branch != "" && result.Branch != "main" && result.Branch != "master" {
+					result.NonStandardBranch = true
+				}
+
 				// Run git fetch with verbose output to detect if there were updates
 				gitCmd := exec.Command("git", "fetch", "--all", "--prune")
 				gitCmd.Dir = repo.Path
@@ -149,9 +162,14 @@ var syncCmd = &cobra.Command{
 
 				hasUpdates := updatesCount != "0" && updatesCount != ""
 
-				// If pull flag is set, also do git pull
+				// If pull flag is set, also do git pull from current branch
 				if pull {
-					pullCmd := exec.Command("git", "pull")
+					var pullCmd *exec.Cmd
+					if result.Branch != "" {
+						pullCmd = exec.Command("git", "pull", "origin", result.Branch)
+					} else {
+						pullCmd = exec.Command("git", "pull")
+					}
 					pullCmd.Dir = repo.Path
 					if output, err := pullCmd.CombinedOutput(); err != nil {
 						result.Warning = true
@@ -198,11 +216,20 @@ var syncCmd = &cobra.Command{
 		failCount := 0
 
 		for _, result := range results {
+			branchInfo := ""
+			if result.Branch != "" {
+				branchInfo = fmt.Sprintf("(%s) ", result.Branch)
+			}
+
 			if result.Success {
-				fmt.Printf("%s %s %s\n", successStyle.Render("✓"), repoStyle.Render(result.Name), successStyle.Render(result.Message))
+				if result.NonStandardBranch {
+					fmt.Printf("%s %s %s%s %s\n", warnStyle.Render("⚠"), repoStyle.Render(result.Name), branchInfo, warnStyle.Render(result.Message), warnStyle.Render("branch: "+result.Branch))
+				} else {
+					fmt.Printf("%s %s %s%s\n", successStyle.Render("✓"), repoStyle.Render(result.Name), branchInfo, successStyle.Render(result.Message))
+				}
 				successCount++
 			} else if result.Warning {
-				fmt.Printf("%s %s %s\n", warnStyle.Render("⚠"), repoStyle.Render(result.Name), warnStyle.Render(result.Message))
+				fmt.Printf("%s %s %s%s\n", warnStyle.Render("⚠"), repoStyle.Render(result.Name), branchInfo, warnStyle.Render(result.Message))
 				successCount++
 			} else {
 				fmt.Printf("%s %s %s\n", successStyle.Render("✗"), repoStyle.Render(result.Name), errorStyle.Render(result.Message))

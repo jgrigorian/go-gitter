@@ -3,6 +3,8 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"os/exec"
+	"strings"
 	"text/tabwriter"
 
 	"github.com/jgrigorian/go-gitter/internal/config"
@@ -24,25 +26,47 @@ var listCmd = &cobra.Command{
 			return nil
 		}
 
-		// Show all or filter by group
 		group, _ := cmd.Flags().GetString("group")
+		showBranch, _ := cmd.Flags().GetBool("branch")
 
 		w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
-		fmt.Fprintln(w, "NAME\tPATH\tGROUP\tLAST SYNC")
+
+		if showBranch {
+			fmt.Fprintln(w, "NAME\tPATH\tGROUP\tBRANCH\tLAST SYNC")
+		} else {
+			fmt.Fprintln(w, "NAME\tPATH\tGROUP\tLAST SYNC")
+		}
 
 		for _, repo := range cfg.Repositories {
 			if group != "" && repo.Group != group {
 				continue
 			}
+
 			lastSync := "-"
 			if repo.LastSync != nil {
 				lastSync = repo.LastSync.Format("2006-01-02 15:04")
 			}
+
 			grp := repo.Group
 			if grp == "" {
 				grp = "-"
 			}
-			fmt.Fprintf(w, "%s\t%s\t%s\t%s\n", repo.Name, repo.Path, grp, lastSync)
+
+			branch := "-"
+			if showBranch {
+				branchCmd := exec.Command("git", "branch", "--show-current")
+				branchCmd.Dir = repo.Path
+				branchOutput, err := branchCmd.Output()
+				if err == nil {
+					branch = strings.TrimSpace(string(branchOutput))
+					if branch == "" {
+						branch = "(detached)"
+					}
+				}
+				fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\n", repo.Name, repo.Path, grp, branch, lastSync)
+			} else {
+				fmt.Fprintf(w, "%s\t%s\t%s\t%s\n", repo.Name, repo.Path, grp, lastSync)
+			}
 		}
 		w.Flush()
 
@@ -52,5 +76,6 @@ var listCmd = &cobra.Command{
 
 func init() {
 	listCmd.Flags().StringP("group", "g", "", "Filter by group")
+	listCmd.Flags().BoolP("branch", "b", false, "Show current branch")
 	rootCmd.AddCommand(listCmd)
 }
