@@ -32,21 +32,38 @@ go-gitter add /path/to/repo -g work        # add to a group
 
 ### List repositories
 
-Show all tracked repositories:
+Show all tracked repositories with their current branch:
 
 ```bash
 go-gitter list
 go-gitter list -g work    # filter by group
 ```
 
+Example output:
+```
+NAME     PATH                    GROUP    BRANCH    BEHIND  LAST SYNC
+myrepo   /home/user/projects/foo  work     main      -       2026-03-05 10:30
+myrepo2  /home/user/projects/bar  dev      feature   3       2026-03-05 10:25
+```
+
 ### Sync repositories
 
-Fetch updates for all tracked repositories:
+Fetch or pull updates for all tracked repositories:
 
 ```bash
-go-gitter sync
-go-gitter sync -g work    # sync only a specific group
-go-gitter sync -p         # also pull (not just fetch)
+go-gitter sync              # fetch updates only
+go-gitter sync -g work     # sync only a specific group
+go-gitter sync -p          # pull from current branch
+```
+
+When syncing with `-p`, the tool will pull from the current branch's upstream. Non-standard branches (not main/master) are flagged with a warning.
+
+Example output:
+```
+Syncing 2 repository(s) in parallel...
+
+✓ myrepo (main) pulled changes
+⚠ myrepo2 (feature-branch) 3 update(s) available
 ```
 
 ### Remove a repository
@@ -115,6 +132,9 @@ settings:
 - Track multiple git repositories
 - Organize repositories into groups
 - Parallel syncing with progress indicator
+- Current branch display in list view
+- Pull from current branch during sync
+- Non-standard branch warnings
 - Colorized output
 - Persistent configuration
 - Input validation (validates git repos before adding)
