@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.4.0](https://github.com/jgrigorian/go-gitter/compare/v1.3.0...v1.4.0) (2026-03-06)
+
+
+### Features
+
+* display number of commits behind main branch ([bbc4bd1](https://github.com/jgrigorian/go-gitter/commit/bbc4bd1ea6550ef5d473d9f445cf2dda97f0fc35))
+* display number of commits behind main branch ([236540f](https://github.com/jgrigorian/go-gitter/commit/236540faa0090ff971d322dc757985f6eab2630b))
+
 ## [1.3.0](https://github.com/jgrigorian/go-gitter/compare/v1.2.0...v1.3.0) (2026-03-06)
 
 
