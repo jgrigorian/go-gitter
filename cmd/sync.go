@@ -113,55 +113,74 @@ var syncCmd = &cobra.Command{
 					return
 				}
 
-				// Get current branch
-				branchCmd := exec.Command("git", "branch", "--show-current")
+				// Get current branch using git rev-parse
+				branchCmd := exec.Command("git", "rev-parse", "--abbrev-ref", "HEAD")
 				branchCmd.Dir = repo.Path
 				branchOutput, err := branchCmd.Output()
 				result.Branch = strings.TrimSpace(string(branchOutput))
+				if err != nil || result.Branch == "HEAD" {
+					result.Branch = ""
+				}
 
-				// Check if branch is non-standard (not main, master, or empty for detached HEAD)
-				if err == nil && result.Branch != "" && result.Branch != "main" && result.Branch != "master" {
+				// Check if branch is non-standard (not main, master)
+				if result.Branch != "" && result.Branch != "main" && result.Branch != "master" {
 					result.NonStandardBranch = true
 				}
 
 				// Run git fetch --all --prune
 				gitCmd := exec.Command("git", "fetch", "--all", "--prune")
 				gitCmd.Dir = repo.Path
-				if output, err := gitCmd.CombinedOutput(); err != nil {
+				fetchOutput, err := gitCmd.CombinedOutput()
+				if err != nil {
 					result.Success = false
-					result.Message = fmt.Sprintf("fetch failed: %s", string(output))
+					result.Message = fmt.Sprintf("fetch failed: %s", string(fetchOutput))
 					resultChan <- result
 					return
 				}
 
-				// Get remote changes count
-				gitRevCmd := exec.Command("git", "rev-list", "--count", "HEAD..origin/"+result.Branch)
-				gitRevCmd.Dir = repo.Path
-				revOutput, _ := gitRevCmd.Output()
-				updatesCount := strings.TrimSpace(string(revOutput))
-
-				hasUpdates := updatesCount != "0" && updatesCount != ""
-
-				// If pull flag is set, do git pull from current branch
-				if pull && result.Branch != "" {
-					pullCmd := exec.Command("git", "pull", "origin", result.Branch)
-					pullCmd.Dir = repo.Path
-					if output, err := pullCmd.CombinedOutput(); err != nil {
+				// If pull flag is set, do git pull
+				if pull {
+					if result.Branch == "" {
 						result.Warning = true
-						result.Message = fmt.Sprintf("pull failed: %s", string(output))
+						result.Message = "cannot pull: detached HEAD state"
+						resultChan <- result
+						return
+					}
+
+					// Try git pull (simpler approach)
+					pullCmd := exec.Command("git", "pull")
+					pullCmd.Dir = repo.Path
+					pullOutput, pullErr := pullCmd.CombinedOutput()
+
+					if pullErr != nil {
+						result.Warning = true
+						result.Message = fmt.Sprintf("pull failed: %s", strings.TrimSpace(string(pullOutput)))
 					} else {
 						result.Success = true
-						result.Message = "pulled latest"
+						if strings.Contains(string(pullOutput), "Already up to date") {
+							result.Message = "already up to date"
+						} else {
+							result.Message = "pulled changes"
+						}
 					}
-				} else if pull && result.Branch == "" {
-					result.Warning = true
-					result.Message = "cannot pull: no branch (detached HEAD)"
 				} else {
-					result.Success = true
-					if hasUpdates {
-						result.Message = fmt.Sprintf("fetched %s update(s)", updatesCount)
+					// Check for updates
+					if result.Branch != "" {
+						gitRevCmd := exec.Command("git", "rev-list", "--count", "HEAD..origin/"+result.Branch)
+						gitRevCmd.Dir = repo.Path
+						revOutput, _ := gitRevCmd.Output()
+						updatesCount := strings.TrimSpace(string(revOutput))
+
+						if updatesCount != "0" && updatesCount != "" {
+							result.Success = true
+							result.Message = fmt.Sprintf("%s update(s) available", updatesCount)
+						} else {
+							result.Success = true
+							result.Message = "already up to date"
+						}
 					} else {
-						result.Message = "already up to date"
+						result.Success = true
+						result.Message = "fetched (detached HEAD)"
 					}
 				}
 
