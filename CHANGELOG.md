@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.3.0](https://github.com/jgrigorian/go-gitter/compare/v1.2.0...v1.3.0) (2026-03-06)
+
+
+### Features
+
+* display current branch when listing repos ([f6a9488](https://github.com/jgrigorian/go-gitter/commit/f6a9488f6381a06f42287c876072d869c45a65e0))
+* display current branch when listing repos ([04db541](https://github.com/jgrigorian/go-gitter/commit/04db541deffab7bb3bc3e04a4584ff52059cafff))
+
 ## [1.2.0](https://github.com/jgrigorian/go-gitter/compare/v1.1.2...v1.2.0) (2026-03-05)
 
 
