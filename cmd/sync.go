@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"fmt"
-	"io"
 	"os"
 	"os/exec"
 	"strings"
@@ -125,51 +124,27 @@ var syncCmd = &cobra.Command{
 					result.NonStandardBranch = true
 				}
 
-				// Run git fetch with verbose output to detect if there were updates
+				// Run git fetch --all --prune
 				gitCmd := exec.Command("git", "fetch", "--all", "--prune")
 				gitCmd.Dir = repo.Path
-				stderr, err := gitCmd.StderrPipe()
-				if err != nil {
+				if output, err := gitCmd.CombinedOutput(); err != nil {
 					result.Success = false
-					result.Message = fmt.Sprintf("failed to run git: %v", err)
+					result.Message = fmt.Sprintf("fetch failed: %s", string(output))
 					resultChan <- result
 					return
 				}
 
-				if err := gitCmd.Start(); err != nil {
-					result.Success = false
-					result.Message = fmt.Sprintf("failed to start git: %v", err)
-					resultChan <- result
-					return
-				}
-
-				stderrOutput, _ := io.ReadAll(stderr)
-				if err := gitCmd.Wait(); err != nil {
-					result.Success = false
-					result.Message = string(stderrOutput)
-					if result.Message == "" {
-						result.Message = err.Error()
-					}
-					resultChan <- result
-					return
-				}
-
-				// Check if there were any updates by comparing refs
-				gitRevCmd := exec.Command("git", "rev-list", "--count", "--max-count=1", "HEAD..origin/HEAD")
+				// Get remote changes count
+				gitRevCmd := exec.Command("git", "rev-list", "--count", "HEAD..origin/"+result.Branch)
 				gitRevCmd.Dir = repo.Path
 				revOutput, _ := gitRevCmd.Output()
 				updatesCount := strings.TrimSpace(string(revOutput))
 
 				hasUpdates := updatesCount != "0" && updatesCount != ""
 
-				// If pull flag is set, also do git pull from current branch
-				if pull {
-					var pullCmd *exec.Cmd
-					if result.Branch != "" {
-						pullCmd = exec.Command("git", "pull", "origin", result.Branch)
-					} else {
-						pullCmd = exec.Command("git", "pull")
-					}
+				// If pull flag is set, do git pull from current branch
+				if pull && result.Branch != "" {
+					pullCmd := exec.Command("git", "pull", "origin", result.Branch)
 					pullCmd.Dir = repo.Path
 					if output, err := pullCmd.CombinedOutput(); err != nil {
 						result.Warning = true
@@ -178,6 +153,9 @@ var syncCmd = &cobra.Command{
 						result.Success = true
 						result.Message = "pulled latest"
 					}
+				} else if pull && result.Branch == "" {
+					result.Warning = true
+					result.Message = "cannot pull: no branch (detached HEAD)"
 				} else {
 					result.Success = true
 					if hasUpdates {
