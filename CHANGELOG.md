@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.5.0](https://github.com/jgrigorian/go-gitter/compare/v1.4.0...v1.5.0) (2026-09-11)
+
+
+### Features
+
+* improve CLI developer experience ([3c29139](https://github.com/jgrigorian/go-gitter/commit/3c29139de3247fe14262a4f3da8f1b9b04be2e2d))
+* improve CLI developer experience ([347b199](https://github.com/jgrigorian/go-gitter/commit/347b199edac0f117acaf084d740061f4c2ac72ac))
+
 ## [1.4.0](https://github.com/jgrigorian/go-gitter/compare/v1.3.0...v1.4.0) (2026-03-06)
 
 
