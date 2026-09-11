@@ -4,10 +4,19 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"strings"
 
 	"github.com/jgrigorian/go-gitter/internal/config"
 	"github.com/spf13/cobra"
 )
+
+func editorCommandArgs(editor, path string) []string {
+	args := strings.Fields(editor)
+	if len(args) == 0 {
+		args = []string{"vi"}
+	}
+	return append(args, path)
+}
 
 var configCmd = &cobra.Command{
 	Use:   "config",
@@ -40,12 +49,8 @@ var configEditCmd = &cobra.Command{
 			fmt.Printf("Created new config at: %s\n", path)
 		}
 
-		editor := os.Getenv("EDITOR")
-		if editor == "" {
-			editor = "vi"
-		}
-
-		editCmd := exec.Command(editor, path)
+		editorArgs := editorCommandArgs(os.Getenv("EDITOR"), path)
+		editCmd := exec.Command(editorArgs[0], editorArgs[1:]...)
 		editCmd.Stdin = os.Stdin
 		editCmd.Stdout = os.Stdout
 		editCmd.Stderr = os.Stderr

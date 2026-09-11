@@ -85,6 +85,18 @@ go-gitter config edit        # Open config in your editor ($EDITOR)
 go-gitter config validate    # Validate config and check repositories
 ```
 
+### Shell completion
+
+Generate a completion script for your shell:
+
+```bash
+go-gitter completion bash > "${BASH_COMPLETION_USER_DIR:-~/.local/share/bash-completion/completions}/go-gitter"
+go-gitter completion zsh > "${fpath[1]}/_go-gitter"
+go-gitter completion fish > ~/.config/fish/completions/go-gitter.fish
+```
+
+`go-gitter config edit` supports an `$EDITOR` value with command-line options, such as `EDITOR="code --wait"`.
+
 ## Configuration
 
 Configuration is stored in `~/.config/go-gitter/config.yaml` (or `$XDG_CONFIG_HOME/go-gitter/config.yaml` if set).
